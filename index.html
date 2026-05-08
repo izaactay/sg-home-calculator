@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SG Home Calculator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue:       #2563EB;
+      --blue-light: #EFF6FF;
+      --blue-mid:   #BFDBFE;
+      --blue-dark:  #1E40AF;
+      --red:        #DC2626;
+      --green-bg:   #D1FAE5;
+      --green-text: #065F46;
+      --text:       #18181B;
+      --muted:      #71717A;
+      --subtle:     #A1A1AA;
+      --border:     #E4E4E7;
+      --surface:    #FAFAF8;
+      --bg:         #F4F3EE;
+      --white:      #FFFFFF;
+      --shadow-sm:  0 1px 3px rgba(0,0,0,.05), 0 1px 2px rgba(0,0,0,.04);
+      --shadow-md:  0 4px 16px rgba(0,0,0,.07), 0 1px 4px rgba(0,0,0,.04);
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+      font-size: 14px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .app {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ─── Header ─── */
+    .hdr {
+      height: 52px;
+      flex-shrink: 0;
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 22px;
+      gap: 14px;
+    }
+    .hdr-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .hdr-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--blue);
+    }
+    .hdr-title { font-size: 15px; font-weight: 800; color: var(--text); letter-spacing: -.3px; }
+    .hdr-sep   { width: 1px; height: 16px; background: var(--border); }
+    .hdr-sub   { font-size: 12px; color: var(--subtle); font-weight: 500; }
+
+    /* ─── Main ─── */
+    .main { flex: 1; min-height: 0; display: flex; }
+
+    /* ─── Left panel ─── */
+    .left {
+      width: 284px;
+      flex-shrink: 0;
+      background: var(--white);
+      border-right: 1px solid var(--border);
+      padding: 20px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      overflow: visible;
+      position: relative;
+      z-index: 10;
+    }
+
+    .sec-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--subtle);
+    }
+
+    .field { display: flex; flex-direction: column; gap: 5px; }
+    .field-lbl  { font-size: 12.5px; font-weight: 600; color: var(--text); }
+    .field-hint { font-size: 11px; color: var(--subtle); }
+
+    .input-wrap { position: relative; }
+    .pre-sym {
+      position: absolute;
+      left: 10px; top: 50%;
+      transform: translateY(-50%);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--subtle);
+      pointer-events: none;
+    }
+
+    input[type=number] {
+      width: 100%;
+      height: 38px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: inherit;
+      color: var(--text);
+      background: var(--white);
+      padding: 0 10px 0 24px;
+      outline: none;
+      -moz-appearance: textfield;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
+    input[type=number]:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(37,99,235,.12);
+    }
+
+    /* Toggle */
+    .toggle {
+      display: flex;
+      background: var(--bg);
+      border-radius: 8px;
+      padding: 3px;
+      gap: 2px;
+    }
+    .tog-btn {
+      flex: 1;
+      height: 30px;
+      border: none;
+      background: transparent;
+      border-radius: 6px;
+      font-size: 12.5px;
+      font-weight: 600;
+      font-family: inherit;
+      color: var(--muted);
+      cursor: pointer;
+      transition: background .15s, color .15s, box-shadow .15s;
+    }
+    .tog-btn.on {
+      background: var(--white);
+      color: var(--text);
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* Sliders */
+    .slider-row { display: flex; align-items: center; gap: 12px; }
+    input[type=range] {
+      flex: 1;
+      height: 4px;
+      -webkit-appearance: none;
+      appearance: none;
+      background: var(--border);
+      border-radius: 4px;
+      outline: none;
+      cursor: pointer;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px; height: 16px;
+      background: var(--blue);
+      border-radius: 50%;
+      border: 2.5px solid var(--white);
+      box-shadow: 0 1px 4px rgba(37,99,235,.35);
+    }
+    .slider-val {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--blue);
+      min-width: 46px;
+      text-align: right;
+    }
+
+    /* Pill */
+    .pill {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      margin-top: 3px;
+    }
+    .pill-g { background: var(--green-bg); color: var(--green-text); }
+    .pill-b { background: var(--blue-light); color: var(--blue-dark); }
+
+    /* Info box */
+    .info {
+      background: var(--bg);
+      border-radius: 10px;
+      padding: 11px 13px;
+      font-size: 11.5px;
+      line-height: 1.7;
+      color: var(--muted);
+      margin-top: auto;
+      border: 1px solid var(--border);
+    }
+    .info strong { font-weight: 700; color: var(--text); display: block; margin-bottom: 3px; }
+
+    /* ─── Right panel ─── */
+    .right {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+      gap: 12px;
+      overflow: hidden;
+    }
+
+    /* ─── Compact stat bar ─── */
+    .stat-bar {
+      flex-shrink: 0;
+      background: var(--white);
+      border-radius: 14px;
+      box-shadow: var(--shadow-md);
+      display: flex;
+      overflow: hidden;
+    }
+
+    .stat-item {
+      flex: 1;
+      padding: 12px 18px;
+      border-right: 1px solid var(--border);
+      min-width: 0;
+    }
+    .stat-item:last-child { border-right: none; }
+    .stat-item.accent { background: var(--blue); }
+
+    .stat-lbl {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--subtle);
+      white-space: nowrap;
+    }
+    .stat-item.accent .stat-lbl { color: rgba(255,255,255,.65); }
+
+    .stat-val {
+      font-size: 19px;
+      font-weight: 800;
+      color: var(--blue);
+      line-height: 1.25;
+      margin-top: 1px;
+      letter-spacing: -.4px;
+      font-variant-numeric: tabular-nums;
+    }
+    .stat-item.accent .stat-val { color: var(--white); }
+
+    .stat-val2 {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      margin-top: 2px;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -.2px;
+    }
+    .stat-item.accent .stat-val2 { color: rgba(255,255,255,.85); }
+
+    .stat-sub {
+      font-size: 11px;
+      color: var(--subtle);
+      margin-top: 1px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .stat-item.accent .stat-sub { color: rgba(255,255,255,.6); }
+
+    /* ─── Tooltip system ─── */
+    .th-tip, .val-tip {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      cursor: help;
+    }
+
+    /* Header tooltip appears BELOW (into table body, within overflow container) */
+    .th-tip::after {
+      content: attr(data-tip);
+      position: absolute;
+      top: calc(100% + 7px);
+      left: 50%;
+      transform: translateX(-50%);
+      width: max-content;
+      max-width: 210px;
+      white-space: normal;
+      background: #18181B;
+      color: #F4F4F5;
+      font-size: 11px;
+      font-weight: 400;
+      line-height: 1.55;
+      padding: 7px 11px;
+      border-radius: 8px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .15s;
+      z-index: 9999;
+      box-shadow: 0 4px 16px rgba(0,0,0,.25);
+      text-align: left;
+    }
+    .th-tip:hover::after { opacity: 1; }
+
+    /* Cell tooltip appears ABOVE */
+    .val-tip::after {
+      content: attr(data-tip);
+      position: absolute;
+      bottom: calc(100% + 7px);
+      left: 50%;
+      transform: translateX(-50%);
+      width: max-content;
+      max-width: 210px;
+      white-space: normal;
+      background: #18181B;
+      color: #F4F4F5;
+      font-size: 11px;
+      font-weight: 400;
+      line-height: 1.55;
+      padding: 7px 11px;
+      border-radius: 8px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .15s;
+      z-index: 9999;
+      box-shadow: 0 4px 16px rgba(0,0,0,.25);
+      text-align: left;
+    }
+    .val-tip:hover::after { opacity: 1; }
+
+    /* Inline acronym tooltip — appears above, left-aligned to stay within sidebar */
+    .acr-tip {
+      position: relative;
+      cursor: help;
+      text-decoration: underline dotted;
+      text-decoration-color: var(--subtle);
+      text-underline-offset: 2px;
+      font-style: normal;
+    }
+    .acr-tip::after {
+      content: attr(data-tip);
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 0;
+      width: max-content;
+      max-width: 210px;
+      white-space: normal;
+      background: #18181B;
+      color: #F4F4F5;
+      font-size: 11px;
+      font-weight: 400;
+      line-height: 1.55;
+      padding: 7px 11px;
+      border-radius: 8px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .15s;
+      z-index: 9999;
+      box-shadow: 0 4px 16px rgba(0,0,0,.25);
+      text-align: left;
+    }
+    .acr-tip:hover::after { opacity: 1; }
+
+    .tip-i {
+      display: inline-flex;
+      width: 13px; height: 13px;
+      border-radius: 50%;
+      background: var(--border);
+      color: var(--muted);
+      font-size: 8.5px;
+      font-weight: 800;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-style: normal;
+      line-height: 1;
+    }
+
+    /* ─── Table card ─── */
+    .tcard {
+      background: var(--white);
+      border-radius: 14px;
+      box-shadow: var(--shadow-md);
+      overflow: visible; /* let tooltips escape */
+      flex-shrink: 0;
+      /* clip the card background itself to rounded corners */
+      isolation: isolate;
+    }
+
+    table { width: 100%; border-collapse: collapse; }
+
+    thead th {
+      padding: 8px 16px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--subtle);
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    thead th:last-child { text-align: center; }
+
+    /* Round the outer corners of the table to match card */
+    thead tr:first-child th:first-child { border-radius: 14px 0 0 0; }
+    thead tr:first-child th:last-child  { border-radius: 0 14px 0 0; }
+    tbody tr:last-child  td:first-child { border-radius: 0 0 0 14px; }
+    tbody tr:last-child  td:last-child  { border-radius: 0 0 14px 0; }
+
+    tbody tr {
+      cursor: pointer;
+      transition: background .1s;
+      border-left: 3px solid transparent;
+    }
+    tbody tr:hover:not(.over) { background: #F7F7FF; }
+    tbody tr.sel {
+      background: var(--blue-light);
+      border-left-color: var(--blue);
+    }
+    tbody tr.over {
+      opacity: .35;
+      cursor: default;
+    }
+
+    tbody td {
+      padding: 9px 16px;
+      font-size: 13px;
+      border-bottom: 1px solid var(--border);
+      font-variant-numeric: tabular-nums;
+    }
+    tbody tr:last-child td { border-bottom: none; }
+
+    td.num  { font-weight: 600; }
+    td.loan { font-weight: 700; }
+    td.prop { font-weight: 700; color: var(--blue-dark); }
+    td.ctr  { text-align: center; }
+
+    .radio {
+      width: 15px; height: 15px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all .15s;
+    }
+    tr.sel .radio { border-color: var(--blue); background: var(--blue); }
+    tr.sel .radio::after {
+      content: '';
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--white);
+    }
+
+    /* ─── Chart card ─── */
+    .chart-card {
+      flex: 1;
+      min-height: 0;
+      background: var(--white);
+      border-radius: 14px;
+      box-shadow: var(--shadow-md);
+      padding: 14px 18px;
+      display: flex;
+      flex-direction: column;
+    }
+    .chart-hdr {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+      margin-bottom: 10px;
+    }
+    .chart-title {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--subtle);
+    }
+    .chart-meta { font-size: 11px; color: var(--subtle); font-weight: 500; }
+    .chart-wrap { flex: 1; min-height: 0; position: relative; }
+    #chartCanvas {
+      position: absolute; inset: 0;
+      width: 100% !important; height: 100% !important;
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <header class="hdr">
+    <div class="hdr-logo">
+      <div class="hdr-dot"></div>
+      <span class="hdr-title">SG Home Calculator</span>
+    </div>
+    <span class="hdr-sep"></span>
+    <span class="hdr-sub">Singapore Mortgage &amp; Affordability</span>
+  </header>
+
+  <div class="main">
+
+    <!-- ── LEFT PANEL ── -->
+    <aside class="left">
+      <div class="sec-label">Your Profile</div>
+
+      <div class="field">
+        <div class="field-lbl">Monthly Gross Income</div>
+        <div class="input-wrap">
+          <span class="pre-sym">$</span>
+          <input type="number" id="income" value="8000" min="500" step="500">
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="field-lbl">Existing Monthly Debts</div>
+        <div class="field-hint">Car loan, personal loan, credit card min.</div>
+        <div class="input-wrap">
+          <span class="pre-sym">$</span>
+          <input type="number" id="debts" value="0" min="0" step="100">
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="field-lbl">Property Type</div>
+        <div class="toggle">
+          <button class="tog-btn on" id="btnHDB"     onclick="setType('HDB')">HDB / EC</button>
+          <button class="tog-btn"    id="btnPrivate" onclick="setType('Private')">Private</button>
+        </div>
+        <span id="limitPill" class="pill pill-g">MSR limit: 30% (HDB &amp; new EC)</span>
+      </div>
+
+      <div class="field">
+        <div class="field-lbl">Loan Tenure</div>
+        <div class="slider-row">
+          <input type="range" id="tenure" min="5" max="30" value="25" step="1"
+                 oninput="syncSlider('tenure','tenureVal', v => v + ' yrs')">
+          <span class="slider-val" id="tenureVal">25 yrs</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="field-lbl">Annual Interest Rate</div>
+        <div class="slider-row">
+          <input type="range" id="rate" min="1.0" max="7.0" value="2.6" step="0.1"
+                 oninput="syncSlider('rate','rateVal', v => parseFloat(v).toFixed(1) + '%')">
+          <span class="slider-val" id="rateVal">2.6%</span>
+        </div>
+      </div>
+
+      <div class="info">
+        <strong>Singapore Regulations</strong>
+        · HDB / EC: <abbr class="acr-tip" data-tip="Mortgage Servicing Ratio — limits home loan repayments to 30% of gross monthly income. Applies to HDB and new EC purchases.">MSR</abbr> ≤ 30% · 80% <abbr class="acr-tip" data-tip="Loan-to-Value — maximum loan as a % of property price. HDB/EC borrowers can finance up to 80% of the purchase price.">LTV</abbr><br>
+        · Private (incl. resale EC): <abbr class="acr-tip" data-tip="Total Debt Servicing Ratio — limits all monthly debt repayments (home loan + other debts) to 55% of gross monthly income.">TDSR</abbr> ≤ 55% · 75% <abbr class="acr-tip" data-tip="Loan-to-Value — maximum loan as a % of property price. Private property borrowers can finance up to 75% of the purchase price.">LTV</abbr><br>
+        · Based on monthly gross income
+      </div>
+    </aside>
+
+    <!-- ── RIGHT PANEL ── -->
+    <div class="right">
+
+      <!-- Compact stat bar -->
+      <div class="stat-bar">
+        <div class="stat-item">
+          <div class="stat-lbl">Max Loan</div>
+          <div class="stat-val" id="hMaxLoan">—</div>
+          <div class="stat-sub" id="hMaxLoanSub">—</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-lbl">Max Monthly Payment</div>
+          <div class="stat-val" id="hMaxPmt">—</div>
+          <div class="stat-sub" id="hPmtSub">—</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-lbl">Selected Scenario</div>
+          <div class="stat-val" id="hSelVal" style="color:var(--text)">—</div>
+          <div class="stat-sub" id="hSelSub">Click a row below</div>
+        </div>
+      </div>
+
+      <!-- Scenarios table -->
+      <div class="tcard">
+        <table>
+          <thead>
+            <tr>
+              <th>
+                <span class="th-tip" data-tip="Percentage of gross monthly income allocated to the mortgage payment.">
+                  % of Income <i class="tip-i">i</i>
+                </span>
+              </th>
+              <th>
+                <span class="th-tip" data-tip="Monthly repayment = (income × %) − existing monthly debts.">
+                  Monthly Payment <i class="tip-i">i</i>
+                </span>
+              </th>
+              <th>
+                <span class="th-tip" data-tip="Maximum loan amount for this payment level, using the standard mortgage present-value formula.">
+                  Loan Amount <i class="tip-i">i</i>
+                </span>
+              </th>
+              <th>
+                <span class="th-tip" data-tip="Loan ÷ LTV ratio (80% HDB/EC · 75% Private). The minimum property price you could buy with this loan.">
+                  Min. Home Price <i class="tip-i">i</i>
+                </span>
+              </th>
+              <th>
+                <span class="th-tip" data-tip="Total interest paid over the full loan term = (monthly payment × months) − loan amount.">
+                  Total Interest <i class="tip-i">i</i>
+                </span>
+              </th>
+              <th>
+                <span class="th-tip" data-tip="Total cash paid to the bank over the full loan term, including all interest.">
+                  Total Paid <i class="tip-i">i</i>
+                </span>
+              </th>
+              <th>Select</th>
+            </tr>
+          </thead>
+          <tbody id="tBody"></tbody>
+        </table>
+      </div>
+
+      <!-- Chart -->
+      <div class="chart-card">
+        <div class="chart-hdr">
+          <span class="chart-title">Loan Amortization — Annual Breakdown</span>
+          <span class="chart-meta" id="chartMeta"></span>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="chartCanvas"></canvas>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  let propType = 'HDB';
+  let selPct   = 30;
+  let chart    = null;
+
+  const PCTS = [5, 10, 15, 20, 25, 30, 35, 40];
+  const get  = id => document.getElementById(id);
+
+  function fmtCompact(n) {
+    if (n >= 1e6) return '$' + (n / 1e6).toFixed(2) + 'M';
+    if (n >= 1e3) return '$' + Math.round(n / 1e3) + 'K';
+    return '$' + Math.round(n);
+  }
+  function fmtFull(n) {
+    return '$' + Math.round(n).toLocaleString('en-SG');
+  }
+
+  function syncSlider(inputId, valId, fmt) {
+    get(valId).textContent = fmt(get(inputId).value);
+    calc();
+  }
+
+  function loanFromPmt(pmt, annualRate, years) {
+    const r = annualRate / 100 / 12, n = years * 12;
+    if (r === 0) return pmt * n;
+    return pmt * (1 - Math.pow(1 + r, -n)) / r;
+  }
+
+  function setType(type) {
+    propType = type;
+    get('btnHDB').classList.toggle('on', type === 'HDB');
+    get('btnPrivate').classList.toggle('on', type === 'Private');
+
+    const pill = get('limitPill');
+    if (type === 'HDB') {
+      pill.textContent = 'MSR limit: 30% (HDB & new EC)';
+      pill.className   = 'pill pill-g';
+      get('rate').value = 2.6;
+      get('rateVal').textContent = '2.6%';
+      selPct = 30;
+    } else {
+      pill.textContent = 'TDSR limit: 55% of gross income';
+      pill.className   = 'pill pill-b';
+      get('rate').value = 3.5;
+      get('rateVal').textContent = '3.5%';
+      selPct = 55;
+    }
+    calc();
+  }
+
+  function calc() {
+    const income  = parseFloat(get('income').value)  || 0;
+    const debts   = parseFloat(get('debts').value)   || 0;
+    const tenure  = parseInt(get('tenure').value);
+    const rate    = parseFloat(get('rate').value);
+
+    const limitPct   = propType === 'HDB' ? 30 : 55;
+    const limitLabel = propType === 'HDB' ? 'MSR' : 'TDSR';
+    const ltv        = propType === 'HDB' ? 0.80 : 0.75;
+    const dpPct      = propType === 'HDB' ? '20%' : '25%';
+
+    const maxPmt      = Math.max(0, income * limitPct / 100 - debts);
+    const maxLoan     = maxPmt > 0 ? loanFromPmt(maxPmt, rate, tenure) : 0;
+    const maxMinHome  = maxLoan / ltv;
+    const maxMinDp    = maxMinHome - maxLoan;
+
+    // Stat bar
+    get('hMaxLoan').textContent    = fmtCompact(maxLoan);
+    get('hMaxLoanSub').textContent = `At ${limitPct}% ${limitLabel} limit`;
+    get('hMaxPmt').textContent     = fmtFull(maxPmt);
+    get('hPmtSub').textContent     = debts > 0 ? `After ${fmtFull(debts)}/mo debts` : `At ${limitPct}% ${limitLabel}`;
+
+    // Table
+    const tbody = get('tBody');
+    tbody.innerHTML = '';
+    let selPmtVal = null, selLoanVal = null;
+
+    PCTS.forEach(pct => {
+      const pmt = income * pct / 100 - debts;
+      if (pmt <= 0) return;
+
+      const loan      = loanFromPmt(pmt, rate, tenure);
+      const minHome   = loan / ltv;
+      const minDp     = minHome - loan;
+      const interest  = pmt * tenure * 12 - loan;
+      const totalPaid = pmt * tenure * 12;
+      const over      = pct > limitPct;
+      const isLimit   = pct === limitPct;
+      const isSel     = pct === selPct;
+
+      if (isSel) { selPmtVal = pmt; selLoanVal = loan; }
+
+      const tr = document.createElement('tr');
+      tr.className = (isSel ? 'sel ' : '') + (over ? 'over' : '');
+
+      const pctColor = over ? 'var(--red)' : isLimit ? 'var(--blue)' : 'var(--text)';
+      const tag = isLimit
+        ? `<span style="font-size:10px;font-weight:700;color:var(--blue);margin-left:5px">${limitLabel} max</span>`
+        : over
+        ? `<span style="font-size:10px;color:var(--red);margin-left:5px">exceeds ${limitLabel}</span>`
+        : '';
+
+      const dpTip = `Min. down payment: ${fmtFull(minDp)} (${dpPct} of home price)`;
+
+      tr.innerHTML = `
+        <td><span style="font-weight:700;font-size:14px;color:${pctColor}">${pct}%</span>${tag}</td>
+        <td class="num">${fmtFull(pmt)}</td>
+        <td class="num loan">${fmtCompact(loan)}</td>
+        <td class="num prop">
+          <span class="val-tip" data-tip="${dpTip}">
+            ${fmtCompact(minHome)} <i class="tip-i">i</i>
+          </span>
+        </td>
+        <td class="num" style="color:var(--muted)">${fmtCompact(interest)}</td>
+        <td class="num">${fmtCompact(totalPaid)}</td>
+        <td class="ctr"><div class="radio"></div></td>
+      `;
+
+      if (!over) {
+        tr.addEventListener('click', () => { selPct = pct; calc(); });
+      }
+      tbody.appendChild(tr);
+    });
+
+    // Selected stat
+    if (selPct !== null && selLoanVal !== null) {
+      const selMinHome = selLoanVal / ltv;
+      const selMinDp   = selMinHome - selLoanVal;
+      get('hSelVal').textContent = fmtCompact(selMinHome);
+      get('hSelVal').style.color = 'var(--blue)';
+      get('hSelSub').textContent = `${fmtFull(selPmtVal)}/mo · ${selPct}% · Down: ${fmtCompact(selMinDp)}`;
+      renderChart(selLoanVal, selPmtVal, rate, tenure);
+    }
+  }
+
+  function renderChart(loan, pmt, rate, tenure) {
+    const r = rate / 100 / 12;
+    const labels = [], principals = [], interests = [], balances = [];
+    let balance = loan;
+
+    for (let yr = 1; yr <= tenure; yr++) {
+      let yp = 0, yi = 0;
+      for (let m = 0; m < 12 && balance > 0.01; m++) {
+        const interest  = balance * r;
+        const principal = Math.min(pmt - interest, balance);
+        yi += interest; yp += principal; balance -= principal;
+      }
+      labels.push('Y' + yr);
+      principals.push(Math.round(yp));
+      interests.push(Math.round(yi));
+      balances.push(Math.max(0, Math.round(balance)));
+    }
+
+    get('chartMeta').textContent =
+      `${tenure}-yr · ${rate.toFixed(1)}% p.a. · ${fmtFull(pmt)}/mo · Total interest: ${fmtCompact(pmt * tenure * 12 - loan)}`;
+
+    const ctx = get('chartCanvas').getContext('2d');
+    if (chart) chart.destroy();
+
+    chart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          { type: 'bar',  label: 'Principal Paid',    data: principals, backgroundColor: '#2563EB', borderRadius: 2, stack: 's', order: 1 },
+          { type: 'bar',  label: 'Interest Paid',     data: interests,  backgroundColor: '#FCA5A5', borderRadius: 2, stack: 's', order: 1 },
+          { type: 'line', label: 'Remaining Balance', data: balances,   borderColor: '#D97706', backgroundColor: 'transparent',
+            pointRadius: tenure <= 20 ? 2 : 0, pointHoverRadius: 4, borderWidth: 2.5, tension: 0.35, yAxisID: 'y2', order: 0 },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { labels: { font: { size: 11, family: "'Plus Jakarta Sans', sans-serif" }, boxWidth: 10, padding: 14 } },
+          tooltip: {
+            backgroundColor: 'rgba(24,24,27,.95)',
+            titleFont: { size: 11, family: "'Plus Jakarta Sans', sans-serif" },
+            bodyFont:  { size: 11, family: "'Plus Jakarta Sans', sans-serif" },
+            padding: 10,
+            callbacks: { label: ctx => ` ${ctx.dataset.label}: ${fmtFull(ctx.raw)}` },
+          },
+        },
+        scales: {
+          x: { stacked: true, grid: { display: false }, ticks: { font: { size: 10, family: "'Plus Jakarta Sans', sans-serif" }, maxRotation: 0 } },
+          y: { stacked: true, grid: { color: '#F4F4F5' }, border: { display: false },
+               ticks: { font: { size: 10, family: "'Plus Jakarta Sans', sans-serif" }, callback: v => v >= 1e3 ? '$' + Math.round(v/1e3) + 'K' : '$' + v } },
+          y2: { position: 'right', grid: { display: false }, border: { display: false },
+                ticks: { font: { size: 10, family: "'Plus Jakarta Sans', sans-serif" },
+                         callback: v => v >= 1e6 ? '$' + (v/1e6).toFixed(1)+'M' : v >= 1e3 ? '$'+Math.round(v/1e3)+'K' : '$'+v } },
+        },
+      },
+    });
+  }
+
+  get('income').addEventListener('input', calc);
+  get('debts').addEventListener('input', calc);
+  calc();
+</script>
+</body>
+</html>
